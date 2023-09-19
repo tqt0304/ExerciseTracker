@@ -83,20 +83,23 @@ function dateIsValid(date) {
 
 app.post('/api/users/:_id/exercises', (req, res) => {
   var exercise = new Exercise({exerciseID: req.params._id, description: req.body.description, duration: req.body.duration})
-  if (req.body.date != '') {
+  if (req.body.date != '' &&  dateIsValid(req.body.date)) {
     exercise.date = new Date(req.body.date).toDateString();
+    exercise.realdate = new Date(req.body.date);
   } 
 
   exercise
     .save()
     .then((doc) => {
-      if (dateIsValid(req.body.date)) {
-        Exercise.findByIdAndUpdate(req.params._id, {realdate: new Date(req.body.date).toISOString()})
-        .exec()
-        .catch((err) => {
-          console.error(err);
-        })
-      }
+      // if (dateIsValid(req.body.date)) {
+      //   console.log('OK')
+      //   // Exercise.findByIdAndUpdate(req.params._id, {realdate: new Date(req.body.date).toISOString()})
+      //   // .exec()
+      //   // .catch((err) => {
+      //   //   console.error(err);
+      //   // })
+      //   exercise.realdate = new Date(req.body.date);
+      // }
 
       User.findById(req.params._id)
         .then((sth) => {
@@ -158,20 +161,20 @@ app.get('/api/users/:_id/logs', (req, res) => {
         let t = Exercise.find({
           exerciseID: req.params._id, 
         })
-        // if (typeof req.query.from !== "undefined") {
-        //   t.find({
-        //     realdate: {
-        //       $gte: new Date(req.query.from)
-        //     }
-        //   })
-        // }
-        // if (typeof req.query.to !== "undefined") {
-        //   t.find({
-        //     realdate: {
-        //       $lte: new Date(req.query.to)
-        //     }
-        //   })
-        // }
+        if (typeof req.query.from !== "undefined") {
+          t.find({
+            realdate: {
+              $gte: new Date(req.query.from)
+            }
+          })
+        }
+        if (typeof req.query.to !== "undefined") {
+          t.find({
+            realdate: {
+              $lte: new Date(req.query.to)
+            }
+          })
+        }
         t
         .limit(req.query.limit)
         .select({description: true, duration: true, date: true, _id: false})
